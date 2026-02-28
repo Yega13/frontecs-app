@@ -1,0 +1,150 @@
+/* Layout */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.app-header h1 {
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+}
+
+.app-header p {
+  color: #8888aa;
+  font-size: 0.95rem;
+}
+
+.app-main {
+  width: 100%;
+  max-width: 700px;
+}
+
+/* Dropzone */
+.dropzone {
+  border: 2px dashed #3a3a5c;
+  border-radius: 16px;
+  padding: 64px 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: #16162a;
+}
+
+.dropzone:hover,
+.dropzone--dragging {
+  border-color: #6366f1;
+  background: #1c1c34;
+}
+
+.dropzone-icon { font-size: 3rem; margin-bottom: 16px; }
+.dropzone-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 6px; }
+.dropzone-sub { color: #8888aa; font-size: 0.875rem; }
+.dropzone-error { color: #f87171; margin-top: 12px; font-size: 0.875rem; }
+
+/* File Tree */
+.ready-view {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.file-tree {
+  background: #16162a;
+  border: 1px solid #2a2a48;
+  border-radius: 12px;
+  overflow: hidden;
+  max-height: 380px;
+  display: flex;
+  flex-direction: column;
+}
+
+.file-tree-header {
+  padding: 12px 16px;
+  background: #1c1c34;
+  border-bottom: 1px solid #2a2a48;
+  font-size: 0.8rem;
+  color: #8888aa;
+}
+
+.file-tree-list {
+  overflow-y: auto;
+  list-style: none;
+  padding: 8px 0;
+}
+
+.file-tree-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 16px;
+  font-size: 0.82rem;
+  font-family: monospace;
+  color: #c0c0d8;
+}
+
+.file-tree-item--html { color: #a5b4fc; }
+
+.file-tree-icon { font-size: 0.9rem; }
+.file-tree-path { flex: 1; }
+
+.file-tree-badge {
+  font-size: 0.68rem;
+  background: #6366f1;
+  color: #fff;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: system-ui;
+  font-weight: 600;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 28px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s, transform 0.1s;
+  width: 100%;
+}
+
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn:not(:disabled):active { transform: scale(0.98); }
+
+.btn--primary {
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  color: #fff;
+}
+
+.btn--primary:not(:disabled):hover { opacity: 0.9; }
+
+.btn--secondary {
+  background: #1c1c34;
+  color: #a5b4fc;
+  border: 1px solid #3a3a5c;
+  margin-top: 12px;
+}
+
+/* Done state */
+.process-done { text-align: center; }
+.process-done-msg { font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; }
+.process-done-sub { color: #8888aa; font-size: 0.875rem; }

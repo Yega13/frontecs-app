@@ -1,0 +1,454 @@
+/* ================================================================
+   FRONTECS EDITOR — injected styles
+   All selectors are namespaced to avoid collisions with site CSS
+   ================================================================ */
+
+/* Hover outline for editable elements */
+[data-frontecs-edit="1"] *:not([data-fe-ui]):not(html):not(body):not(script):not(style):not(link):not(meta):hover {
+  outline: 2px dashed rgba(99, 102, 241, 0.55) !important;
+  outline-offset: 3px !important;
+  cursor: text !important;
+}
+
+/* Active element being edited */
+[data-fe-active="1"] {
+  outline: 2px solid #6366f1 !important;
+  outline-offset: 3px !important;
+  min-height: 1em;
+}
+
+/* ================================================================
+   FLOATING BUTTON
+   ================================================================ */
+#__fe_btn__ {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  background: #1e1e38 !important;
+  color: #a5b4fc !important;
+  padding: 10px 18px !important;
+  border-radius: 10px !important;
+  font-family: system-ui, -apple-system, sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  z-index: 2147483640 !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+  user-select: none !important;
+  border: 1px solid rgba(99,102,241,0.3) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  transition: background 0.15s !important;
+}
+#__fe_btn__:hover {
+  background: #2a2a4a !important;
+}
+
+/* ================================================================
+   SAVE INDICATOR
+   ================================================================ */
+#__fe_save__ {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 120px !important;
+  padding: 8px 14px !important;
+  border-radius: 8px !important;
+  font-family: system-ui, -apple-system, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  z-index: 2147483641 !important;
+  pointer-events: none !important;
+  display: none;
+}
+#__fe_save__.saving {
+  background: #1e1e38 !important;
+  color: #8888aa !important;
+  border: 1px solid #2a2a48 !important;
+}
+#__fe_save__.saved {
+  background: #14532d !important;
+  color: #86efac !important;
+  border: 1px solid #166534 !important;
+}
+#__fe_save__.error {
+  background: #450a0a !important;
+  color: #fca5a5 !important;
+  border: 1px solid #7f1d1d !important;
+}
+
+/* ================================================================
+   TOOLBAR
+   ================================================================ */
+#__fe_toolbar__ {
+  position: absolute !important;
+  display: none !important;
+  align-items: center !important;
+  gap: 2px !important;
+  background: #1e1e38 !important;
+  border: 1px solid #3a3a5c !important;
+  border-radius: 10px !important;
+  padding: 6px 8px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+  z-index: 2147483639 !important;
+  font-family: system-ui, -apple-system, sans-serif !important;
+  flex-wrap: nowrap !important;
+}
+
+/* Override display:none set inline when visible */
+#__fe_toolbar__[style*="display: flex"] {
+  display: flex !important;
+}
+
+@media (max-width: 480px) {
+  #__fe_toolbar__ {
+    flex-wrap: wrap !important;
+    max-width: calc(100vw - 16px) !important;
+  }
+  #__fe_link_popup__ {
+    min-width: calc(100vw - 32px) !important;
+    flex-wrap: wrap !important;
+  }
+}
+
+#__fe_toolbar__ button {
+  background: transparent !important;
+  border: none !important;
+  color: #c0c0d8 !important;
+  padding: 6px 10px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-size: 13px !important;
+  font-family: inherit !important;
+  line-height: 1 !important;
+  transition: background 0.12s !important;
+  min-width: 32px !important;
+}
+#__fe_toolbar__ button:hover {
+  background: #2e2e50 !important;
+  color: #fff !important;
+}
+#__fe_toolbar__ button b { font-weight: 900; }
+#__fe_toolbar__ button i { font-style: italic; }
+#__fe_toolbar__ button u { text-decoration: underline; }
+
+.__fe_sep__ {
+  width: 1px !important;
+  height: 20px !important;
+  background: #3a3a5c !important;
+  margin: 0 4px !important;
+  flex-shrink: 0 !important;
+}
+
+#__fe_toolbar__ label {
+  display: flex !important;
+  align-items: center !important;
+  cursor: pointer !important;
+  padding: 4px 6px !important;
+  border-radius: 6px !important;
+}
+#__fe_toolbar__ label:hover {
+  background: #2e2e50 !important;
+}
+
+#__fe_color__ {
+  width: 24px !important;
+  height: 24px !important;
+  border: none !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  background: none !important;
+}
+
+#__fe_size__ {
+  background: #16162a !important;
+  color: #c0c0d8 !important;
+  border: 1px solid #3a3a5c !important;
+  border-radius: 6px !important;
+  padding: 4px 6px !important;
+  font-size: 12px !important;
+  font-family: inherit !important;
+  cursor: pointer !important;
+  outline: none !important;
+}
+#__fe_size__:hover, #__fe_size__:focus {
+  border-color: #6366f1 !important;
+}
+
+/* ================================================================
+   IMAGE OVERLAY
+   ================================================================ */
+
+/* Different cursor on images in edit mode */
+[data-frontecs-edit="1"] img:hover {
+  outline: 2px dashed rgba(168, 85, 247, 0.7) !important;
+  outline-offset: 3px !important;
+  cursor: pointer !important;
+}
+
+#__fe_img_overlay__ {
+  position: absolute !important;
+  display: none !important;
+  align-items: center !important;
+  gap: 6px !important;
+  background: rgba(15, 15, 26, 0.92) !important;
+  border: 1px solid #3a3a5c !important;
+  border-radius: 10px !important;
+  padding: 8px 10px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
+  z-index: 2147483639 !important;
+  font-family: system-ui, -apple-system, sans-serif !important;
+  backdrop-filter: blur(6px) !important;
+}
+
+#__fe_img_overlay__[style*="display: flex"] {
+  display: flex !important;
+}
+
+#__fe_img_replace__ {
+  background: #6366f1 !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 8px 14px !important;
+  border-radius: 7px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  font-family: inherit !important;
+  cursor: pointer !important;
+  transition: background 0.12s !important;
+}
+#__fe_img_replace__:hover { background: #4f46e5 !important; }
+
+#__fe_img_close__ {
+  background: transparent !important;
+  border: none !important;
+  color: #8888aa !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  padding: 4px 6px !important;
+  border-radius: 5px !important;
+  font-family: inherit !important;
+}
+#__fe_img_close__:hover { color: #fff !important; background: #2e2e50 !important; }
+
+/* ================================================================
+   LINK POPUP
+   ================================================================ */
+
+[data-frontecs-edit="1"] a:hover {
+  outline: 2px dashed rgba(251, 146, 60, 0.7) !important;
+  outline-offset: 3px !important;
+  cursor: pointer !important;
+}
+
+#__fe_link_popup__ {
+  position: absolute !important;
+  display: none !important;
+  align-items: center !important;
+  gap: 6px !important;
+  background: #1e1e38 !important;
+  border: 1px solid #3a3a5c !important;
+  border-radius: 10px !important;
+  padding: 8px 10px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+  z-index: 2147483639 !important;
+  font-family: system-ui, -apple-system, sans-serif !important;
+  min-width: 320px !important;
+}
+
+#__fe_link_popup__[style*="display: flex"] {
+  display: flex !important;
+}
+
+.__fe_link_label__ {
+  font-size: 12px !important;
+  color: #8888aa !important;
+  white-space: nowrap !important;
+}
+
+#__fe_link_input__ {
+  flex: 1 !important;
+  background: #16162a !important;
+  color: #e2e2f0 !important;
+  border: 1px solid #3a3a5c !important;
+  border-radius: 6px !important;
+  padding: 6px 10px !important;
+  font-size: 13px !important;
+  font-family: inherit !important;
+  outline: none !important;
+  min-width: 0 !important;
+}
+#__fe_link_input__:focus { border-color: #6366f1 !important; }
+
+#__fe_link_save__ {
+  background: #6366f1 !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 6px 12px !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  font-family: inherit !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+}
+#__fe_link_save__:hover { background: #4f46e5 !important; }
+
+#__fe_link_close__ {
+  background: transparent !important;
+  border: none !important;
+  color: #8888aa !important;
+  font-size: 16px !important;
+  cursor: pointer !important;
+  padding: 4px 6px !important;
+  border-radius: 5px !important;
+  font-family: inherit !important;
+  line-height: 1 !important;
+}
+#__fe_link_close__:hover { color: #fff !important; background: #2e2e50 !important; }
+
+/* ================================================================
+   SEO MODAL
+   ================================================================ */
+#__fe_seo_backdrop__ {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0,0,0,0.6) !important;
+  z-index: 2147483644 !important;
+  display: none;
+  backdrop-filter: blur(3px) !important;
+}
+
+#__fe_seo_modal__ {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  display: none !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  background: #1e1e38 !important;
+  border: 1px solid #3a3a5c !important;
+  border-radius: 14px !important;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.7) !important;
+  z-index: 2147483645 !important;
+  font-family: system-ui, -apple-system, sans-serif !important;
+  width: min(480px, 92vw) !important;
+  overflow: hidden !important;
+}
+
+#__fe_seo_modal__[style*="display: flex"] {
+  display: flex !important;
+}
+
+.__fe_seo_header__ {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 16px 20px !important;
+  border-bottom: 1px solid #2a2a48 !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #e2e2f0 !important;
+}
+
+#__fe_seo_close__ {
+  background: transparent !important;
+  border: none !important;
+  color: #8888aa !important;
+  font-size: 20px !important;
+  cursor: pointer !important;
+  padding: 2px 6px !important;
+  border-radius: 6px !important;
+  font-family: inherit !important;
+  line-height: 1 !important;
+}
+#__fe_seo_close__:hover { color: #fff !important; background: #2e2e50 !important; }
+
+.__fe_seo_body__ {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+  padding: 20px !important;
+}
+
+.__fe_seo_label__ {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 5px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #8888aa !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.__fe_seo_label__ input,
+.__fe_seo_label__ textarea {
+  background: #16162a !important;
+  color: #e2e2f0 !important;
+  border: 1px solid #3a3a5c !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  font-family: inherit !important;
+  outline: none !important;
+  resize: vertical !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+.__fe_seo_label__ input:focus,
+.__fe_seo_label__ textarea:focus {
+  border-color: #6366f1 !important;
+}
+
+.__fe_seo_footer__ {
+  display: flex !important;
+  gap: 8px !important;
+  padding: 14px 20px !important;
+  border-top: 1px solid #2a2a48 !important;
+  justify-content: flex-end !important;
+}
+
+#__fe_seo_save__ {
+  background: #6366f1 !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 8px 20px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  font-family: inherit !important;
+  cursor: pointer !important;
+}
+#__fe_seo_save__:hover { background: #4f46e5 !important; }
+
+#__fe_seo_cancel__ {
+  background: transparent !important;
+  color: #8888aa !important;
+  border: 1px solid #3a3a5c !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-family: inherit !important;
+  cursor: pointer !important;
+}
+#__fe_seo_cancel__:hover { color: #e2e2f0 !important; border-color: #6366f1 !important; }
+
+/* SEO button in toolbar */
+#__fe_seo_btn__ {
+  background: transparent !important;
+  border: none !important;
+  color: #a5b4fc !important;
+  padding: 6px 10px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  font-family: inherit !important;
+  letter-spacing: 0.04em !important;
+  transition: background 0.12s !important;
+}
+#__fe_seo_btn__:hover { background: #2e2e50 !important; color: #fff !important; }
