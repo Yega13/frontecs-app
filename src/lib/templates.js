@@ -14,7 +14,7 @@ app.use(express.json({ limit: '10mb' }));
 // Block direct access to server infrastructure files before static middleware sees them
 const BLOCKED = new Set(['server.js', 'package.json', 'package-lock.json', 'edits.json']);
 app.use((req, res, next) => {
-  const first = req.path.replace(/^\/+/, '').split('/')[0];
+  const first = req.path.split('/').filter(Boolean)[0] || '';
   if (BLOCKED.has(first)) return res.status(403).end();
   next();
 });
