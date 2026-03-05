@@ -87,8 +87,16 @@
       wantsEdit = true;
     }
 
-    // Always load and apply edits for every visitor.
-    // Only enable edit mode if the key is valid.
+    // Use server-preloaded edits if available — instant, no network round-trip, no flash.
+    if (window.__FE_EDITS__) {
+      STATE.edits = window.__FE_EDITS__.edits || [];
+      STATE.seo   = window.__FE_EDITS__.seo   || {};
+      applyAllEdits(STATE.edits, STATE.seo);
+      if (wantsEdit) enableEditMode();
+      return;
+    }
+
+    // Fallback: async fetch (for older processed sites without server-side preload).
     fetch('/api/edits')
       .then(function (r) { return r.json(); })
       .then(function (data) {

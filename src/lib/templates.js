@@ -28,8 +28,6 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.static(path.join(__dirname)));
-
 function getConfig() {
   return JSON.parse(fs.readFileSync(path.join(__dirname, 'edits.json'), 'utf8'));
 }
@@ -42,7 +40,6 @@ app.get('/api/edits', async (req, res) => {
       .select('edits, seo')
       .eq('site_id', config.siteId)
       .single();
-    // PGRST116 = no rows found yet (first visit), that's fine
     if (error && error.code !== 'PGRST116') throw error;
     res.json({
       edits:     data ? data.edits : [],
@@ -73,6 +70,55 @@ app.post('/api/save', async (req, res) => {
     res.status(500).json({ ok: false, error: 'Server error' });
   }
 });
+
+// Serve HTML files with edits pre-injected — eliminates flash of original content.
+// The preloaded data is read synchronously by the editor script (window.__FE_EDITS__).
+app.use(async (req, res, next) => {
+  const rawPath = path.resolve(path.join(__dirname, req.path));
+  if (!rawPath.startsWith(__dirname)) return res.status(403).end();
+
+  const ext = path.extname(req.path).toLowerCase();
+  const isHtml = (ext === '.html' || ext === '' || req.path === '/');
+  if (!isHtml) return next();
+
+  let filePath = rawPath;
+  if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+    filePath = path.join(__dirname, 'index.html');
+  }
+  if (!filePath.endsWith('.html')) {
+    filePath = path.join(__dirname, 'index.html');
+  }
+
+  try {
+    const config = getConfig();
+    const { data } = await supabase
+      .from('site_edits')
+      .select('edits, seo')
+      .eq('site_id', config.siteId)
+      .single();
+
+    let html = fs.readFileSync(filePath, 'utf8');
+    const preload = '<script>window.__FE_EDITS__=' + JSON.stringify({
+      edits: data ? data.edits : [],
+      seo:   data ? data.seo   : {},
+    }) + ';</script>';
+
+    // Inject just before </head> so it's available before any other script runs
+    const headClose = html.toLowerCase().lastIndexOf('</head>');
+    if (headClose !== -1) {
+      html = html.slice(0, headClose) + preload + html.slice(headClose);
+    } else {
+      html = preload + html;
+    }
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (e) {
+    res.sendFile(filePath);
+  }
+});
+
+app.use(express.static(path.join(__dirname)));
 
 app.use((req, res) => {
   const filePath = path.resolve(path.join(__dirname, req.path));
