@@ -10,6 +10,7 @@ export default function App() {
   const [sourceName, setSourceName] = useState('')
   const [processing, setProcessing] = useState(false)
   const [done, setDone] = useState(false)
+  const [framework, setFramework] = useState(null)
 
   const handleDrop = useCallback(async (droppedFile) => {
     setDone(false)
@@ -24,7 +25,8 @@ export default function App() {
     setProcessing(true)
 
     const { processAndDownload } = await import('./lib/processor')
-    await processAndDownload(files, sourceName)
+    const result = await processAndDownload(files, sourceName)
+    if (result?.framework?.detected) setFramework(result.framework)
 
     setProcessing(false)
     setDone(true)
@@ -42,12 +44,17 @@ export default function App() {
           <Dropzone onDrop={handleDrop} />
         ) : (
           <div className="ready-view">
+            {framework?.detected && (
+              <div className="framework-warning">
+                ⚠ This site appears to use {framework.name}. The editor works best with plain static HTML. Editing may be unstable.
+              </div>
+            )}
             <FileTree files={files} />
             <ProcessButton
               onClick={handleProcess}
               processing={processing}
               done={done}
-              onReset={() => { setFiles(null); setSourceName(''); setDone(false) }}
+              onReset={() => { setFiles(null); setSourceName(''); setDone(false); setFramework(null) }}
             />
           </div>
         )}

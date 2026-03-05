@@ -1,3 +1,13 @@
+.framework-warning {
+  background: #431407;
+  border: 1px solid #9a3412;
+  color: #fed7aa;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
 /* Layout */
 .app {
   min-height: 100vh;

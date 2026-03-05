@@ -24,13 +24,45 @@
     seoModal: null,
   };
 
-  var EDITOR_ROOT_IDS = ['__fe_btn__', '__fe_toolbar__', '__fe_save__', '__fe_img_overlay__', '__fe_link_popup__', '__fe_seo_modal__', '__fe_seo_backdrop__'];
+  var EDITOR_ROOT_IDS = ['__fe_btn__', '__fe_toolbar__', '__fe_save__', '__fe_save_btn__', '__fe_img_overlay__', '__fe_link_popup__', '__fe_seo_modal__', '__fe_seo_backdrop__'];
   var SKIP_TAGS = ['SCRIPT', 'STYLE', 'HTML', 'HEAD', 'BODY', 'LINK', 'META', 'NOSCRIPT'];
+
+  var HAS_UNSAVED = false;
+
+  // sessionStorage fallback for private/incognito mode
+  var _sessionFallback = null;
+  function sessionGet(key) {
+    try { return sessionStorage.getItem(key); } catch(e) { return _sessionFallback; }
+  }
+  function sessionSet(key, val) {
+    try { sessionStorage.setItem(key, val); } catch(e) { _sessionFallback = val; }
+  }
+  function sessionRemove(key) {
+    try { sessionStorage.removeItem(key); } catch(e) { _sessionFallback = null; }
+  }
 
   // ================================================================
   // BOOT
   // ================================================================
-  fetch('/__editor__/config.json')
+  function fetchWithRetry(url, attempts, delay, resolve, reject) {
+    fetch(url).then(resolve).catch(function () {
+      if (attempts <= 1) { reject(); return; }
+      setTimeout(function () {
+        fetchWithRetry(url, attempts - 1, delay, resolve, reject);
+      }, delay);
+    });
+  }
+
+  function showConfigError() {
+    var banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#c0392b;color:#fff;padding:10px 16px;z-index:2147483647;font-family:sans-serif;font-size:14px;text-align:center;';
+    banner.textContent = 'Frontecs editor failed to load config. Re-open via /__edit__/{key}';
+    document.body.appendChild(banner);
+  }
+
+  new Promise(function (resolve, reject) {
+    fetchWithRetry('/__editor__/config.json', 3, 800, resolve, reject);
+  })
     .then(function (r) { return r.json(); })
     .then(function (cfg) {
       CONFIG = cfg;
@@ -38,16 +70,44 @@
       STATE.siteId = cfg.siteId;
       boot();
     })
-    .catch(function () {});
+    .catch(function () { showConfigError(); });
 
   function boot() {
     var keyInUrl = extractKeyFromUrl();
+    var wantsEdit = false;
+
     if (keyInUrl) {
-      if (keyInUrl !== CONFIG.secretKey) return;
-      sessionStorage.setItem('__fe_key__', CONFIG.secretKey);
+      if (keyInUrl !== CONFIG.secretKey) {
+        showInvalidKeyError();
+      } else {
+        sessionSet('__fe_key__', CONFIG.secretKey);
+        wantsEdit = true;
+      }
+    } else if (sessionGet('__fe_key__') === CONFIG.secretKey) {
+      wantsEdit = true;
     }
-    if (sessionStorage.getItem('__fe_key__') !== CONFIG.secretKey) return;
-    loadAndEnable();
+
+    // Always load and apply edits for every visitor.
+    // Only enable edit mode if the key is valid.
+    fetch('/api/edits')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        STATE.edits = data.edits || [];
+        STATE.seo = data.seo || {};
+        applyAllEdits(STATE.edits, STATE.seo);
+        if (wantsEdit) enableEditMode();
+      })
+      .catch(function () {
+        if (wantsEdit) enableEditMode();
+      });
+  }
+
+  function showInvalidKeyError() {
+    var banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#7f1d1d;color:#fca5a5;padding:10px 16px;z-index:2147483647;font-family:sans-serif;font-size:14px;text-align:center;cursor:pointer;';
+    banner.textContent = 'Frontecs: Invalid edit key. Click to dismiss.';
+    banner.addEventListener('click', function () { banner.remove(); });
+    document.body.appendChild(banner);
   }
 
   function extractKeyFromUrl() {
@@ -56,18 +116,6 @@
     m = location.search.match(/[?&]__edit__=([a-f0-9]+)/);
     if (m) return m[1];
     return null;
-  }
-
-  function loadAndEnable() {
-    fetch('/api/edits')
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        STATE.edits = data.edits || [];
-        STATE.seo = data.seo || {};
-        applyAllEdits(STATE.edits, STATE.seo);
-        enableEditMode();
-      })
-      .catch(function () { enableEditMode(); });
   }
 
   // ================================================================
@@ -106,6 +154,7 @@
     STATE.editMode = true;
     document.body.setAttribute('data-frontecs-edit', '1');
     buildFloatingButton();
+    buildSaveButton();
     buildSaveIndicator();
     buildToolbar();
     buildImageOverlay();
@@ -125,9 +174,26 @@
     btn.title = 'Click to exit edit mode';
     btn.addEventListener('click', function () {
       if (confirm('Exit edit mode? Unsaved changes will be lost.')) {
-        sessionStorage.removeItem('__fe_key__');
+        sessionRemove('__fe_key__');
         location.href = location.pathname;
       }
+    });
+    document.body.appendChild(btn);
+  }
+
+  // ================================================================
+  // SAVE BUTTON
+  // ================================================================
+  function buildSaveButton() {
+    var btn = document.createElement('button');
+    btn.id = '__fe_save_btn__';
+    btn.textContent = 'Save';
+    btn.title = 'Save changes (Ctrl+S)';
+    btn.addEventListener('click', function () {
+      if (STATE.activeEl) commitEdit(STATE.activeEl);
+      showSaving();
+      clearTimeout(STATE.saveTimer);
+      persistEdits();
     });
     document.body.appendChild(btn);
   }
@@ -150,6 +216,7 @@
   }
 
   function showSaved() {
+    HAS_UNSAVED = false;
     var el = STATE.saveIndicator;
     el.textContent = 'Saved \u2713';
     el.className = 'saved';
@@ -665,6 +732,7 @@
   // AUTO-SAVE
   // ================================================================
   function scheduleSave() {
+    HAS_UNSAVED = true;
     showSaving();
     clearTimeout(STATE.saveTimer);
     STATE.saveTimer = setTimeout(persistEdits, 600);
@@ -721,6 +789,20 @@
         }
         hideImageOverlay();
         hideLinkPopup();
+      }
+    });
+
+    window.addEventListener('beforeunload', function (e) {
+      if (HAS_UNSAVED) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Save before leaving.';
+      }
+    });
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden' && HAS_UNSAVED) {
+        if (STATE.activeEl) commitEdit(STATE.activeEl);
+        persistEdits();
       }
     });
   }

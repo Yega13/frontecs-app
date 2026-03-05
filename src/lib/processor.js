@@ -14,10 +14,28 @@ function generateSiteId() {
 
 function injectEditorIntoHtml(html) {
   const injection = `\n  <link rel="stylesheet" href="/__editor__/editor.css">\n  <script src="/__editor__/editor.js"></script>`
-  if (html.includes('</body>')) {
-    return html.replace('</body>', injection + '\n</body>')
+  if (/<\/body>/i.test(html)) {
+    return html.replace(/<\/body>/i, injection + '\n</body>')
   }
   return html + injection
+}
+
+export function detectFramework(files) {
+  const checks = [
+    { name: 'React', markers: ['data-reactroot', '__next', '__NEXT_DATA__', 'react.production.min.js', 'react-dom.production.min.js', '_next/static'] },
+    { name: 'Vue', markers: ['data-v-', 'vue.runtime', '__vue__', 'vue.min.js', 'vue.global.js'] },
+    { name: 'Angular', markers: ['ng-version', 'angular.js', 'angular.min.js', 'ng-app', 'platformBrowserDynamic'] },
+  ]
+  for (const [filePath, { content, binary }] of files.entries()) {
+    if (binary) continue
+    const text = content || ''
+    for (const { name, markers } of checks) {
+      if (markers.some(m => text.includes(m) || filePath.includes(m))) {
+        return { detected: true, name }
+      }
+    }
+  }
+  return { detected: false }
 }
 
 export async function processAndDownload(files, originalName) {
@@ -50,4 +68,6 @@ export async function processAndDownload(files, originalName) {
   const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' })
   const outName = originalName.replace(/\.zip$/i, '') + '-frontecs.zip'
   saveAs(blob, outName)
+
+  return { framework: detectFramework(files) }
 }

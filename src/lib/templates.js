@@ -10,11 +10,28 @@ const crypto = require('crypto');
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
+
+// Block direct access to server infrastructure files before static middleware sees them
+const BLOCKED = new Set(['server.js', 'package.json', 'package-lock.json', 'edits.json']);
+app.use((req, res, next) => {
+  const first = req.path.replace(/^\/+/, '').split('/')[0];
+  if (BLOCKED.has(first)) return res.status(403).end();
+  next();
+});
+
 app.use(express.static(path.join(__dirname)));
 
 app.post('/api/save', (req, res) => {
-  fs.writeFileSync(path.join(__dirname, 'edits.json'), JSON.stringify(req.body, null, 2));
-  res.json({ ok: true });
+  try {
+    const stored = JSON.parse(fs.readFileSync(path.join(__dirname, 'edits.json'), 'utf8'));
+    if (req.body.secretKey !== stored.secretKey) {
+      return res.status(403).json({ ok: false, error: 'Invalid key' });
+    }
+    fs.writeFileSync(path.join(__dirname, 'edits.json'), JSON.stringify(req.body, null, 2));
+    res.json({ ok: true });
+  } catch(e) {
+    res.status(500).json({ ok: false, error: 'Server error' });
+  }
 });
 
 app.get('/api/edits', (req, res) => {
@@ -41,7 +58,8 @@ app.post('/api/regenerate-key', (req, res) => {
 });
 
 app.use((req, res) => {
-  const filePath = path.join(__dirname, req.path);
+  const filePath = path.resolve(path.join(__dirname, req.path));
+  if (!filePath.startsWith(__dirname)) return res.status(403).end();
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
     res.sendFile(filePath);
   } else {
