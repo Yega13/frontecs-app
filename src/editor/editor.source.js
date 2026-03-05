@@ -103,11 +103,25 @@
   }
 
   function showInvalidKeyError() {
-    var banner = document.createElement('div');
-    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#7f1d1d;color:#fca5a5;padding:10px 16px;z-index:2147483647;font-family:sans-serif;font-size:14px;text-align:center;cursor:pointer;';
-    banner.textContent = 'Frontecs: Invalid edit key. Click to dismiss.';
-    banner.addEventListener('click', function () { banner.remove(); });
-    document.body.appendChild(banner);
+    var backdrop = document.createElement('div');
+    backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:2147483646;backdrop-filter:blur(4px);';
+
+    var card = document.createElement('div');
+    card.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2147483647;background:#1a0a0a;border:1.5px solid #dc2626;border-radius:16px;padding:40px 48px;text-align:center;font-family:system-ui,-apple-system,sans-serif;box-shadow:0 24px 64px rgba(0,0,0,0.8);max-width:420px;width:90%;';
+
+    card.innerHTML = [
+      '<div style="font-size:52px;margin-bottom:16px;">🔑</div>',
+      '<div style="font-size:22px;font-weight:800;color:#fca5a5;margin-bottom:10px;">Invalid Edit Key</div>',
+      '<div style="font-size:14px;color:#f87171;line-height:1.6;margin-bottom:28px;">The key in the URL does not match this site\'s secret key. Check the key in <code style="background:#2d0a0a;padding:2px 6px;border-radius:4px;">__editor__/config.json</code> and try again.</div>',
+      '<button id="__fe_err_dismiss__" style="background:#dc2626;color:#fff;border:none;padding:12px 32px;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Dismiss</button>',
+    ].join('');
+
+    function dismiss() { backdrop.remove(); card.remove(); }
+    backdrop.addEventListener('click', dismiss);
+    card.querySelector('#__fe_err_dismiss__').addEventListener('click', dismiss);
+
+    document.body.appendChild(backdrop);
+    document.body.appendChild(card);
   }
 
   function extractKeyFromUrl() {
