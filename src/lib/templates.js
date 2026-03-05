@@ -3,15 +3,24 @@ import EDITOR_CSS from '../editor/editor.source.css?raw'
 
 export { EDITOR_JS, EDITOR_CSS }
 
+// ================================================================
+// SUPABASE CREDENTIALS — paste your project values here
+// Get them from: supabase.com → your project → Settings → API
+// ================================================================
+const SUPABASE_URL = 'https://ptamgrfdirothcxybzow.supabase.co'
+const SUPABASE_KEY = 'sb_publishable_5eYvTIxYiWNdwJO6JkPxsQ_q4OiM6D_'
+
 export const SERVER_JS = `const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient('${SUPABASE_URL}', '${SUPABASE_KEY}');
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
 
-// Block direct access to server infrastructure files before static middleware sees them
+// Block direct access to server infrastructure files
 const BLOCKED = new Set(['server.js', 'package.json', 'package-lock.json', 'edits.json']);
 app.use((req, res, next) => {
   const first = req.path.split('/').filter(Boolean)[0] || '';
@@ -21,40 +30,48 @@ app.use((req, res, next) => {
 
 app.use(express.static(path.join(__dirname)));
 
-app.post('/api/save', (req, res) => {
+function getConfig() {
+  return JSON.parse(fs.readFileSync(path.join(__dirname, 'edits.json'), 'utf8'));
+}
+
+app.get('/api/edits', async (req, res) => {
   try {
-    const stored = JSON.parse(fs.readFileSync(path.join(__dirname, 'edits.json'), 'utf8'));
-    if (req.body.secretKey !== stored.secretKey) {
+    const config = getConfig();
+    const { data, error } = await supabase
+      .from('site_edits')
+      .select('edits, seo')
+      .eq('site_id', config.siteId)
+      .single();
+    // PGRST116 = no rows found yet (first visit), that's fine
+    if (error && error.code !== 'PGRST116') throw error;
+    res.json({
+      edits:     data ? data.edits : [],
+      seo:       data ? data.seo   : {},
+      secretKey: config.secretKey,
+    });
+  } catch (e) {
+    res.json({ edits: [], seo: {} });
+  }
+});
+
+app.post('/api/save', async (req, res) => {
+  try {
+    const config = getConfig();
+    if (req.body.secretKey !== config.secretKey) {
       return res.status(403).json({ ok: false, error: 'Invalid key' });
     }
-    fs.writeFileSync(path.join(__dirname, 'edits.json'), JSON.stringify(req.body, null, 2));
+    const { error } = await supabase
+      .from('site_edits')
+      .upsert({
+        site_id: config.siteId,
+        edits:   req.body.edits || [],
+        seo:     req.body.seo   || {},
+      });
+    if (error) throw error;
     res.json({ ok: true });
-  } catch(e) {
+  } catch (e) {
     res.status(500).json({ ok: false, error: 'Server error' });
   }
-});
-
-app.get('/api/edits', (req, res) => {
-  try {
-    const data = fs.readFileSync(path.join(__dirname, 'edits.json'), 'utf8');
-    res.json(JSON.parse(data));
-  } catch {
-    res.json({ edits: [], secretKey: null, seo: {} });
-  }
-});
-
-app.post('/api/regenerate-key', (req, res) => {
-  const newKey = crypto.randomBytes(16).toString('hex');
-  try {
-    const raw = fs.readFileSync(path.join(__dirname, 'edits.json'), 'utf8');
-    const data = JSON.parse(raw);
-    data.secretKey = newKey;
-    fs.writeFileSync(path.join(__dirname, 'edits.json'), JSON.stringify(data, null, 2));
-    const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, '__editor__', 'config.json'), 'utf8'));
-    cfg.secretKey = newKey;
-    fs.writeFileSync(path.join(__dirname, '__editor__', 'config.json'), JSON.stringify(cfg, null, 2));
-  } catch {}
-  res.json({ newKey });
 });
 
 app.use((req, res) => {
@@ -76,5 +93,8 @@ export const PACKAGE_JSON = JSON.stringify({
   version: '1.0.0',
   main: 'server.js',
   scripts: { start: 'node server.js' },
-  dependencies: { express: '^4.18.2' },
+  dependencies: {
+    express: '^4.18.2',
+    '@supabase/supabase-js': '^2.45.0',
+  },
 }, null, 2)
