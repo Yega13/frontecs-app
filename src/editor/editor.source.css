@@ -462,6 +462,34 @@
 }
 #__fe_seo_cancel__:hover { color: #e2e2f0 !important; border-color: #6366f1 !important; }
 
+/* ================================================================
+   IMAGE RESIZE HANDLES
+   ================================================================ */
+#__fe_resize__ {
+  position: absolute !important;
+  display: none !important;
+  pointer-events: none !important;
+  z-index: 2147483638 !important;
+  outline: 2px solid #a855f7 !important;
+  outline-offset: 0 !important;
+  box-sizing: border-box !important;
+}
+.__fe_rh__ {
+  position: absolute !important;
+  width: 10px !important;
+  height: 10px !important;
+  background: #fff !important;
+  border: 2px solid #a855f7 !important;
+  border-radius: 2px !important;
+  pointer-events: all !important;
+  box-sizing: border-box !important;
+  z-index: 2147483639 !important;
+}
+.__fe_rh__[data-corner="nw"] { top: -5px !important; left: -5px !important; cursor: nw-resize !important; }
+.__fe_rh__[data-corner="ne"] { top: -5px !important; right: -5px !important; cursor: ne-resize !important; }
+.__fe_rh__[data-corner="sw"] { bottom: -5px !important; left: -5px !important; cursor: sw-resize !important; }
+.__fe_rh__[data-corner="se"] { bottom: -5px !important; right: -5px !important; cursor: se-resize !important; }
+
 /* SEO button in toolbar */
 #__fe_seo_btn__ {
   background: transparent !important;

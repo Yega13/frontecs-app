@@ -6,7 +6,7 @@ export { EDITOR_JS, EDITOR_CSS }
 // ================================================================
 // SUPABASE CREDENTIALS — paste your project values here
 // Get them from: supabase.com → your project → Settings → API
-// ================================================================
+// ================================================================~
 const SUPABASE_URL = 'https://ptamgrfdirothcxybzow.supabase.co'
 const SUPABASE_KEY = 'sb_publishable_5eYvTIxYiWNdwJO6JkPxsQ_q4OiM6D_'
 
@@ -101,7 +101,7 @@ app.use(async (req, res, next) => {
     const preload = '<script>window.__FE_EDITS__=' + JSON.stringify({
       edits: data ? data.edits : [],
       seo:   data ? data.seo   : {},
-    }) + ';</script>';
+    }) + ';document.documentElement.style.visibility="hidden";setTimeout(function(){document.documentElement.style.visibility="";},1500);</script>';
 
     // Inject just before </head> so it's available before any other script runs
     const headClose = html.toLowerCase().lastIndexOf('</head>');

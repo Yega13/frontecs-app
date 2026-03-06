@@ -22,12 +22,25 @@
     history: [],       // { selector, type, before, after }
     historyIndex: -1,  // points to the last applied entry
     seoModal: null,
+    resizeHandles: null,
+    resizeData: null,
   };
 
-  var EDITOR_ROOT_IDS = ['__fe_btn__', '__fe_toolbar__', '__fe_save__', '__fe_save_btn__', '__fe_img_overlay__', '__fe_link_popup__', '__fe_seo_modal__', '__fe_seo_backdrop__'];
+  var EDITOR_ROOT_IDS = ['__fe_btn__', '__fe_toolbar__', '__fe_save__', '__fe_save_btn__', '__fe_img_overlay__', '__fe_link_popup__', '__fe_seo_modal__', '__fe_seo_backdrop__', '__fe_resize__'];
   var SKIP_TAGS = ['SCRIPT', 'STYLE', 'HTML', 'HEAD', 'BODY', 'LINK', 'META', 'NOSCRIPT'];
 
   var HAS_UNSAVED = false;
+  var _editsApplied = false;
+
+  // Apply pre-loaded edits immediately — the script runs at end of body so DOM is ready.
+  // This eliminates flash: page stays hidden (set by server preload), edits apply, page shows.
+  if (window.__FE_EDITS__) {
+    STATE.edits = window.__FE_EDITS__.edits || [];
+    STATE.seo   = window.__FE_EDITS__.seo   || {};
+    applyAllEdits(STATE.edits, STATE.seo);
+    document.documentElement.style.visibility = '';
+    _editsApplied = true;
+  }
 
   // sessionStorage fallback for private/incognito mode
   var _sessionFallback = null;
@@ -87,11 +100,8 @@
       wantsEdit = true;
     }
 
-    // Use server-preloaded edits if available — instant, no network round-trip, no flash.
-    if (window.__FE_EDITS__) {
-      STATE.edits = window.__FE_EDITS__.edits || [];
-      STATE.seo   = window.__FE_EDITS__.seo   || {};
-      applyAllEdits(STATE.edits, STATE.seo);
+    // Edits were already applied synchronously at script-load time — just enable edit mode.
+    if (_editsApplied) {
       if (wantsEdit) enableEditMode();
       return;
     }
@@ -151,6 +161,7 @@
         if (edit.type === 'text') el.innerHTML = edit.after;
         else if (edit.type === 'image') el.src = edit.after;
         else if (edit.type === 'link') el.href = edit.after;
+        else if (edit.type === 'resize') { el.style.width = edit.after; el.style.height = 'auto'; }
       } catch (e) {}
     });
     if (seo && Object.keys(seo).length) applySeoToPage(seo);
@@ -180,6 +191,7 @@
     buildSaveIndicator();
     buildToolbar();
     buildImageOverlay();
+    buildResizeHandles();
     buildLinkPopup();
     buildSeoModal();
     setupClickDispatch();
@@ -378,11 +390,105 @@
     ov.style.display = 'flex';
     ov.style.top = (rect.top + window.scrollY + rect.height / 2 - 20) + 'px';
     ov.style.left = (rect.left + window.scrollX + rect.width / 2 - 80) + 'px';
+    showResizeHandles(img);
   }
 
   function hideImageOverlay() {
     STATE.imgOverlay.style.display = 'none';
     STATE.activeImg = null;
+    hideResizeHandles();
+  }
+
+  // ================================================================
+  // IMAGE RESIZE HANDLES
+  // ================================================================
+  function buildResizeHandles() {
+    var container = document.createElement('div');
+    container.id = '__fe_resize__';
+    container.setAttribute('data-fe-ui', '1');
+    container.style.display = 'none';
+
+    ['nw', 'ne', 'sw', 'se'].forEach(function (corner) {
+      var h = document.createElement('div');
+      h.className = '__fe_rh__';
+      h.dataset.corner = corner;
+      h.addEventListener('mousedown', onResizeStart);
+      container.appendChild(h);
+    });
+
+    document.body.appendChild(container);
+    STATE.resizeHandles = container;
+  }
+
+  function showResizeHandles(img) {
+    var c = STATE.resizeHandles;
+    if (!c) return;
+    var r = img.getBoundingClientRect();
+    c.style.left   = (r.left + window.scrollX) + 'px';
+    c.style.top    = (r.top  + window.scrollY) + 'px';
+    c.style.width  = r.width  + 'px';
+    c.style.height = r.height + 'px';
+    c.style.display = 'block';
+    c._img = img;
+  }
+
+  function hideResizeHandles() {
+    if (STATE.resizeHandles) {
+      STATE.resizeHandles.style.display = 'none';
+      STATE.resizeHandles._img = null;
+    }
+  }
+
+  function repositionResizeHandles() {
+    var c = STATE.resizeHandles;
+    if (!c || c.style.display === 'none' || !c._img) return;
+    showResizeHandles(c._img);
+  }
+
+  function onResizeStart(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    var img = STATE.resizeHandles._img;
+    if (!img) return;
+    var r = img.getBoundingClientRect();
+    STATE.resizeData = {
+      img:       img,
+      corner:    e.currentTarget.dataset.corner,
+      startX:    e.clientX,
+      startY:    e.clientY,
+      startW:    r.width,
+      startH:    r.height,
+      origWidth: img.style.width,
+    };
+    document.addEventListener('mousemove', onResizeMove);
+    document.addEventListener('mouseup',   onResizeEnd);
+  }
+
+  function onResizeMove(e) {
+    var d = STATE.resizeData;
+    if (!d) return;
+    var dx = e.clientX - d.startX;
+    // right-side corners grow when dragging right; left-side shrink
+    var newW = (d.corner === 'se' || d.corner === 'ne')
+      ? Math.max(20, d.startW + dx)
+      : Math.max(20, d.startW - dx);
+    var ratio = d.startH / d.startW;
+    d.img.style.width  = newW + 'px';
+    d.img.style.height = (newW * ratio) + 'px';
+    repositionResizeHandles();
+  }
+
+  function onResizeEnd() {
+    var d = STATE.resizeData;
+    if (!d) return;
+    document.removeEventListener('mousemove', onResizeMove);
+    document.removeEventListener('mouseup',   onResizeEnd);
+    var newW = d.img.style.width;
+    if (newW !== d.origWidth) {
+      recordEdit({ type: 'resize', selector: getSelector(d.img), before: d.origWidth, after: newW });
+      scheduleSave();
+    }
+    STATE.resizeData = null;
   }
 
   function processImage(file, cb) {
@@ -617,9 +723,11 @@
 
     window.addEventListener('scroll', function () {
       if (STATE.activeEl) positionToolbar(STATE.activeEl);
+      repositionResizeHandles();
     }, { passive: true });
     window.addEventListener('resize', function () {
       if (STATE.activeEl) positionToolbar(STATE.activeEl);
+      repositionResizeHandles();
     });
   }
 
@@ -727,6 +835,7 @@
       if (entry.type === 'text') el.innerHTML = value;
       else if (entry.type === 'image') el.src = value;
       else if (entry.type === 'link') el.href = value;
+      else if (entry.type === 'resize') { el.style.width = value; el.style.height = 'auto'; }
     } catch (e) {}
     // Sync STATE.edits
     var idx = STATE.edits.findIndex(function (e) {
