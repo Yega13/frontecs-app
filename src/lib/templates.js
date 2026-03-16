@@ -98,10 +98,10 @@ app.use(async (req, res, next) => {
       .single();
 
     let html = fs.readFileSync(filePath, 'utf8');
-    const preload = '<script>window.__FE_EDITS__=' + JSON.stringify({
+    const preload = '<style id="__fe_hide__">html{visibility:hidden!important}</style><script>window.__FE_EDITS__=' + JSON.stringify({
       edits: data ? data.edits : [],
       seo:   data ? data.seo   : {},
-    }) + ';document.documentElement.style.visibility="hidden";setTimeout(function(){document.documentElement.style.visibility="";},1500);</script>';
+    }) + ';setTimeout(function(){var h=document.getElementById("__fe_hide__");if(h&&h.parentNode)h.parentNode.removeChild(h);document.documentElement.style.visibility="";},2500);</script>';
 
     // Inject just before </head> so it's available before any other script runs
     const headClose = html.toLowerCase().lastIndexOf('</head>');
