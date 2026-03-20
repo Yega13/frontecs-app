@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 const FAQ = [
   {
     q: 'Does Frontecs work with React or Vue sites?',
@@ -17,15 +19,19 @@ const FAQ = [
   },
   {
     q: 'What can be edited?',
-    a: 'Text, images, links, section order, and SEO metadata. Undo/redo is supported. Changes sync across all matching elements on every page.',
+    a: 'Text, images, links, section order, and SEO metadata. Undo/redo is supported on Pro. Changes sync across all matching elements on every page.',
   },
   {
     q: 'Is Frontecs free?',
-    a: 'Yes, Frontecs is completely free during the beta. Check the Pricing page for future plans.',
+    a: 'There is a free plan limited to 5 sites per month. The Pro plan at $20/month unlocks unlimited sites, undo/redo history, and all features.',
   },
 ]
 
 export default function Docs() {
+  const [openIndex, setOpenIndex] = useState(null)
+
+  const toggle = (i) => setOpenIndex(openIndex === i ? null : i)
+
   return (
     <>
       <header className="app-header">
@@ -93,10 +99,26 @@ export default function Docs() {
           <section className="docs-faq">
             <h2 className="docs-faq-title">FAQ</h2>
             <div className="faq-list">
-              {FAQ.map(({ q, a }) => (
+              {FAQ.map(({ q, a }, i) => (
                 <div className="faq-item" key={q}>
-                  <h3 className="faq-q">{q}</h3>
-                  <p className="faq-a">{a}</p>
+                  <button
+                    className="faq-q"
+                    onClick={() => toggle(i)}
+                    aria-expanded={openIndex === i}
+                  >
+                    <span>{q}</span>
+                    <svg
+                      className={'faq-chevron' + (openIndex === i ? ' faq-chevron--open' : '')}
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  {openIndex === i && (
+                    <p className="faq-a">{a}</p>
+                  )}
                 </div>
               ))}
             </div>

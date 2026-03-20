@@ -32,6 +32,11 @@ function getConfig() {
   return JSON.parse(fs.readFileSync(path.join(__dirname, 'edits.json'), 'utf8'));
 }
 
+// Edit mode entry point — redirect /__edit__/KEY to /?__edit__=KEY
+app.get('/__edit__/:key', (req, res) => {
+  res.redirect(302, '/?__edit__=' + req.params.key);
+});
+
 app.get('/api/edits', async (req, res) => {
   try {
     const config = getConfig();
