@@ -46,7 +46,7 @@ export async function processAndDownload(files, originalName) {
 
   // Add all original files, injecting editor into HTML files
   for (const [path, { content, binary }] of files.entries()) {
-    if (!binary && path.endsWith('.html')) {
+    if (!binary && (path.endsWith('.html') || path.endsWith('.htm'))) {
       zip.file(path, injectEditorIntoHtml(content))
     } else {
       zip.file(path, content)

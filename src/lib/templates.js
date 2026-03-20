@@ -47,9 +47,8 @@ app.get('/api/edits', async (req, res) => {
       .single();
     if (error && error.code !== 'PGRST116') throw error;
     res.json({
-      edits:     data ? data.edits : [],
-      seo:       data ? data.seo   : {},
-      secretKey: config.secretKey,
+      edits: data ? data.edits : [],
+      seo:   data ? data.seo   : {},
     });
   } catch (e) {
     res.json({ edits: [], seo: {} });
@@ -93,6 +92,9 @@ app.use(async (req, res, next) => {
   if (!filePath.endsWith('.html')) {
     filePath = path.join(__dirname, 'index.html');
   }
+
+  // If the resolved file doesn't exist on disk, bail out to static/catch-all
+  if (!fs.existsSync(filePath)) return next();
 
   try {
     const config = getConfig();
